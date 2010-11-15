@@ -1,0 +1,1534 @@
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;************************************************************
+                      00002 ; File: cardpov1_5.asm
+                      00003 ; Programmer: George Hadley
+                      00004 ; Description: Version 1 source code for POV Business card project
+                      00005 ; Device: pic18f25j50
+                      00006 ; Program History:
+                      00007 ;       Date            Ver                                     Description
+                      00008 ; 10-19-09              0.0             Initial program created
+                      00009 ; 11-08-09              0.0             tmr0 interrupt code created, pov table added,
+                      00010 ;                                               main loop created
+                      00011 ; 11-28-09              1.0             Code rewrite for PIC18F25J50
+                      00012 ;
+                      00013 ; To-Do-List:
+                      00014 ; X) Oscillator initialization code
+                      00015 ; X) Initialization code
+                      00016 ; X) Timer Interrupt Code
+                      00017 ; X) Button debounce code
+                      00018 ; X) POV character code
+                      00019 ; 6) Multiple string support
+                      00020 ;
+                      00021 ; Notes:
+                      00022 ; 1) Pin Usage:
+                      00023 ;       Pin             Port                                    Description
+                      00024 ;       11              RC0                     Pushbutton 1 (momentary contact to ground)
+                      00025 ;       10,7-2  RA6-RA0         POV LEDs
+                      00026 ;
+                      00027 ; 2) Status and Control Registers
+                      00028 ;       pbctrl: pushbutton control register
+                      00029 ;       Bit             Name                                    Description
+                      00030 ;       0               prevpb1         Bit to store the previous state of pushbutton 1 (PortC,0)
+                      00031 ;       1               pb1                     Flag bit to indicate pb1 has been pressed
+                      00032 ;
+                      00033 ;       povctrl: POV control register
+                      00034 ;   Bit         Name                                    Description
+                      00035 ;       0               povdir          POV direction bit (1: forward, 0:reverse)
+                      00036 ;       1               updatepov       POV update flag
+                      00037 ;
+                      00038 ; 3) When using timer0 in 16-bit mode, the upper byte (tmr0h) is not updated
+                      00039 ;        until a write occurs to the lower byte.
+                      00040 ; 4) On the PIC18f2550, RC3 is not implemented and RC4 and RC5 must be used
+                      00041 ;        for USB or only as digital inputs
+                      00042 ;************************************************************
+                      00043         #INCLUDE<P18F25J50.INC>
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ;  MPASM PIC18F25J50 processor include
+                      00005 ; 
+                      00006 ;  (c) Copyright 1999-2009 Microchip Technology, All rights reserved
+                      00007 ;==========================================================================
+                      00008 
+                      02029         LIST
+Warning[215]: Processor superseded by command line.  Verify processor symbol.
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00044         LIST P = P18F25J50, R = DEC
+                      00045 
+                      00046         #INCLUDE "pov_table.inc"
+000800                00001         ORG 0800H
+                      00002         #DEFINE POVSEGS1        43                      ;Constant for number of segments in string 1
+                      00003         #DEFINE POVSEGS2        91                      ;Constang for number of segments in string 2
+                      00004         #DEFINE POVSEGS3        57 
+                      00005         
+000800                00006 POV_TABLE ;table containing locations of pov character strings and lengths
+000800 0003           00007         DE      0X03
+000802 0045 0C08      00008         DE      0X45,0X00,0X08,0X0C     ;string 1 pov length and location
+000806 005B 5708      00009         DE      0X5B,0X00,0X08,0X57     ;string 2 pov length and location
+00080A 0039 BB08      00010         DE      0X39,0X00,0X08,0XBB     ;string 3 pov length and location       
+00080E                00011 END_TABLE
+                      00012 
+00080E                00013 POV_STRING1 ;pov character data (string 1)
+00080E 0000 0000 0000 00014         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+000814 0000 0000 0000 00015         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+00081A 107F 0408 007F 00016         DE 0X7F,0X10,0X8,0X4,0X7F,0X0           ;N
+000820 497F 3649 0000 00017         DE 0X7F,0X49,0X49,0X36,0X0                      ;B
+000826 002F           00018         DE 0X2F,0X0                                                     ;i
+000828 3F10 0010      00019         DE 0X10,0X3F,0X10,0X0                           ;t
+00082C 017E 010E 007E 00020         DE 0X7E,0X1,0XE,0X1,0X7E,0X0            ;W
+000832 111F 1F11 0000 00021         DE 0X1F,0X11,0X11,0X1F,0X0                      ;o
+000838 101F 1F10 0000 00022         DE 0X1F,0X10,0X10,0X1F,0X0                      ;n
+00083E 111F 7F11 0000 00023         DE 0X1F,0X11,0X11,0X7F,0X0                      ;d
+000844 150E 0D15 0000 00024         DE 0XE,0X15,0X15,0XD,0X0                        ;e
+00084A 081F 1010      00025         DE 0X1F,0X8,0X10,0X10                           ;r
+00084E 0000 0000 0000 00026         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+000854 0000 0000 0000 00027         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+00085A                00028 END_STRING1
+                      00029 
+00085A                00030 POV_STRING2     ;pov character data (string 2)
+00085A 0000 0000 0000 00031         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+000860 0000 0000 0000 00032         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+000866 417F 4949 004F 00033         DE      0X7F,0X41,0X49,0X49,0X4F,0X00   ;G
+00086C 497F 4149 0000 00034         DE      0X7F,0X49,0X49,0X41,0X00                ;E
+000872 417F 4141 007F 00035         DE      0X7F,0X41,0X41,0X41,0X7F,0X00   ;O
+000878 487F 4848 0037 00036         DE      0X7F,0X48,0X48,0X48,0X37,0X00   ;R
+00087E 417F 4949 004F 00037         DE      0X7F,0X41,0X49,0X49,0X4F,0X00   ;G
+000884 497F 4149 0000 00038         DE      0X7F,0X49,0X49,0X41,0X00                ;E
+00088A 0000 0000      00039         DE      0X00,0X00,0X00
+00088E 087F 0808 007F 00040         DE      0X7F,0X08,0X08,0X08,0X7F,0X00   ;H
+000894 443F 4444 003F 00041         DE      0X3F,0X44,0X44,0X44,0X3F,0X00   ;A
+00089A 417F 4141 003E 00042         DE      0X7F,0X41,0X41,0X41,0X3E,0X00   ;D
+0008A0 017F 0101 0000 00043         DE      0X7F,0X01,0X01,0X01,0X00                ;L
+0008A6 497F 4149 0000 00044         DE      0X7F,0X49,0X49,0X41,0X00                ;E
+0008AC 0870 080F 0070 00045         DE      0X70,0X08,0X0F,0X08,0X70,0X00   ;Y
+0008B2 0000 0000 0000 00046         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+0008B8 0000 0000 0000 00047         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+0008BE                00048 END_STRING2
+                      00049 
+0008BE                00050 POV_STRING3 ;pov character data (string 3)
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0008BE 0000 0000 0000 00051         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+0008C4 0000 0000 0000 00052         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+0008CA 417F 4141 0000 00053         DE      0X7F,0X41,0X41,0X41,0X00                ;C
+0008D0 110E 1211 000F 00054         DE      0X0E,0X11,0X11,0X12,0X0F,0X00   ;a
+0008D6 101F 1010 0000 00055         DE      0X1F,0X10,0X10,0X10,0X00                ;r
+0008DC 111F 7F11 0000 00056         DE      0X1F,0X11,0X11,0X7F,0X00                ;d
+0008E2 487F 7848 0000 00057         DE      0X7F,0X48,0X48,0X78,0X00                ;P
+0008E8 417F 4141 007F 00058         DE      0X7F,0X41,0X41,0X41,0X7F,0X00   ;O
+0008EE 027C 0201 007C 00059         DE      0X7C,0X02,0X01,0X02,0X7C                ;V
+0008F4 0000 0000 0000 00060         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+0008FA 0000 0000 0000 00061         DE      0X00,0X00,0X00,0X00,0X00                ;Buffer
+000900                00062 END_STRING3
+                      00047         ;Configuration bit setup
+Message[313]: CBLOCK constants will start with a value of 0.
+                      00048         CBLOCK ;add global variables here
+  00000000            00049           PBCTRL        ;pushbutton control register
+  00000001            00050           POVCTRL       ;pov control register
+  00000002            00051           SIGN_WIDTH ;width of led sign
+  00000003            00052           COUNTER       ;sign counter variable
+  00000004            00053           POVLOW        ;low portion of POV output
+  00000005            00054           POVHIGH       ;high portion of POV output
+                      00055         ENDC
+                      00056         ;Add any definitions here
+                      00057         ;Pushbutton control register
+                      00058         #DEFINE BUTTON1         PORTC,0         ;Pushbutton 1 Alias
+                      00059         #DEFINE PREVPB1         PBCTRL,0        ;Previous state of pb1
+                      00060         #DEFINE PB1                     PBCTRL,1        ;pb1 press flag
+                      00061         #DEFINE TIMER_HIGH      0XFF
+                      00062         #DEFINE TIMER_LOW       0XA1
+                      00063         ;POV control register
+                      00064         #DEFINE POVDIR          POVCTRL,0       ;POV direction bit
+                      00065         #DEFINE UPDATEPOV       POVCTRL,1       ;POV update flag
+                      00066         #DEFINE POVSEGSR 67                     ;Constant for number of segments (57)
+                      00067         #DEFINE POVSEGSL 189            ;(199)
+                      00068         #DEFINE SEGCOUNT 1                      ;timing divider
+000000                00069         ORG             0
+                      00070         ;Oscillator initialization
+000000 6AE0           00071         CLRF    BSR             ;Clear bank select register
+                      00072                                         ;(should be clear by default, but just in case)
+000002 0E73           00073         MOVLW   0X73    ;Set Internal Oscillator to active
+                      00074                                         ;oscillator, frequency = 8MHz
+000004 6ED3           00075         MOVWF   OSCCON
+000006 D017           00076         BRA             INITIALIZE
+                      00077 
+000008                00078         ORG             08
+000008                00079 INTERRUPT
+                      00080         ;Timer0 Interrupt service routine
+000008 94F2           00081         BCF             INTCON,TMR0IF   ;Important: Clear interrupt flag
+                      00082                                         ;(wouldn't want to be trapped in an isr, would we?)
+                      00083         ;reload tmr0 to trigger in 375 cycles of operation
+00000A 0EFF           00084         MOVLW   TIMER_HIGH
+00000C 6ED7           00085         MOVWF   TMR0H   ;Timer0 to trigger every 375 clock cycles
+00000E 0EA1           00086         MOVLW   TIMER_LOW
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000010 6ED6           00087         MOVWF   TMR0L   ;Write to TMR0L updates entire TMR0 register
+                      00088 
+000012 B082           00089         BTFSC   BUTTON1 ;set pb1 if prevpb1 = 1 and button1 = 0 
+000014 D008           00090         BRA             NO_BUTTON1      
+000016 A000           00091         BTFSS   PREVPB1
+000018 D003           00092         BRA             SET_PREVPB1
+00001A 8200           00093         BSF             PB1
+00001C 9000           00094         BCF             PREVPB1
+00001E D005           00095         BRA             UPDATE
+000020                00096 SET_PREVPB1     ;code for button1 = 1
+000020 9200           00097         BCF             PB1
+000022 9000           00098         BCF             PREVPB1
+000024 D002           00099         BRA             UPDATE
+000026                00100 NO_BUTTON1
+000026 8000           00101         BSF             PREVPB1
+000028 9200           00102         BCF             PB1
+00002A                00103 UPDATE
+                      00104         ;Update POV every 4th interrupt
+00002A 2E03           00105         DECFSZ  COUNTER
+00002C D003           00106         BRA     EXIT_TMR0
+00002E 0E01           00107         MOVLW   SEGCOUNT
+000030 6E03           00108         MOVWF   COUNTER
+000032 8201           00109         BSF             UPDATEPOV       ;Flag main loop to update POV output
+000034                00110 EXIT_TMR0       
+000034 0010           00111         RETFIE
+                      00112 
+000036                00113 INITIALIZE
+                      00114         ;General I/O Initialization
+000036 6A81           00115         CLRF    PORTB   ;clear portb to be used as an output
+000038 6A93           00116         CLRF    TRISB
+00003A 6A8B           00117         CLRF    LATC
+00003C 6A82           00118         CLRF    PORTC
+00003E 0E01           00119         MOVLW   0X01    ;Use top bit of PORTC as output
+000040 6E94           00120         MOVWF   TRISC
+000042 6A89           00121         CLRF    LATA    ;Clear port a output latches
+000044 6A92           00122         CLRF    TRISA   ;Port A to be used as POV output
+                      00123         
+                      00124         ;Timer Initialization
+000046 0E84           00125         MOVLW   0X84    ;Enable, select 16-bit mode, 1:32 prescaler
+000048 6ED5           00126         MOVWF   T0CON
+00004A 0EFF           00127         MOVLW   TIMER_HIGH
+00004C 6ED7           00128         MOVWF   TMR0H   ;Timer0 to trigger every 375 clock cycles
+00004E 0EA1           00129         MOVLW   TIMER_LOW
+000050 6ED6           00130         MOVWF   TMR0L   ;Write to TMR0L updates entire TMR0 register
+                      00131         ;Interrupt Initialization
+000052 94F2           00132         BCF             INTCON,TMR0IF   ; Clear timer0 interrupt flag
+000054 8AF2           00133         BSF             INTCON,TMR0IE   ;Enable timer0 overflow interrupts
+000056 8EF2           00134         BSF             INTCON,GIE              ;Enable global interrupts
+                      00135 
+                      00136         ;User variable initializations
+000058 9200           00137         BCF             PB1                             
+00005A 8000           00138         BSF             PREVPB1         
+00005C 8001           00139         BSF             POVDIR                  ;POV initially scrolls forward  
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00005E 0E01           00140         MOVLW   SEGCOUNT
+000060 6E03           00141         MOVWF   COUNTER
+000062 0E3F           00142         MOVLW   0X3F                    ;Initialize povlow to mask lower 6 bits of POV output
+000064 6E04           00143         MOVWF   POVLOW
+000066 0E60           00144         MOVLW   0X60                    ;Initialize povhigh to mask 7th bit of POV output
+000068 6E05           00145         MOVWF   POVHIGH
+00006A                00146 MAIN
+                      00147         ;load POV sign with correct character count
+00006A 0E43           00148         MOVLW   POVSEGSR
+00006C 6E02           00149         MOVWF   SIGN_WIDTH
+                      00150         ;load initial pov string value
+00006E 0E5A           00151         MOVLW   LOW(POV_STRING2)
+000070 6EF6           00152         MOVWF   TBLPTRL
+000072 0E08           00153         MOVLW   HIGH(POV_STRING2)
+000074 6EF7           00154         MOVWF   TBLPTRH
+000076 0E00           00155         MOVLW   UPPER(POV_STRING2)
+000078 6EF8           00156         MOVWF   TBLPTRU
+00007A                00157 MAIN2
+                      00158         ;wait until updatepov condition is set (done during timer0 interrupt), else, sit in wait loop
+00007A A201           00159         BTFSS   UPDATEPOV
+00007C D7FE           00160         BRA             MAIN2
+                      00161         ;if update pov condition is met...
+00007E 9201           00162         BCF             UPDATEPOV
+                      00163 ;       btfss   povdir                  ;Check POV scroll direction, scroll left if povdir=0
+                      00164 ;       bra             shift_left              ;Branch to left scroll condition
+                      00165 ;       bsf             portb,5                 ;Flash assist light (supposed to help determine which di
+                            rection to scroll)
+000080 D000           00166         BRA             SCROLL_RIGHT    ;if end of sign is not reached, update output with latest POV ch
+                            aracter
+                      00167 ;       movlw   povsegsl
+                      00168 ;       movwf   sign_width
+                      00169 ;       bcf             povdir
+                      00170 ;       bra             scroll_left
+                      00171 ;shift_left
+                      00172 ;       bcf             portb,5
+                      00173 ;       incfsz  sign_width              ;switch directions if left side of POV sign is reached
+                      00174 ;       bra             scroll_left
+                      00175 ;       movlw   povsegsr
+                      00176 ;       movwf   sign_width
+                      00177 ;       bsf             povdir                  ;Fall through to scroll_right instruction
+                      00178 ;       bra             scroll_right
+000082                00179 SCROLL_RIGHT                            ;Display sign character (scroll right)
+000082 0009           00180         TBLRD*+
+000084 50F5           00181         MOVF    TABLAT,W
+000086 1604           00182         ANDWF   POVLOW,F                ;Mask lower 6 bits of POV output
+000088 1605           00183         ANDWF   POVHIGH,F               ;Mask 7th bit of POV output
+00008A 4605           00184         RLNCF   POVHIGH
+00008C C004 FF81      00185         MOVFF   POVLOW,PORTB    ;Load lower 6 bits of POV output
+000090 C005 FF82      00186         MOVFF   POVHIGH,PORTC   ;Load 7th bit of POV output
+000094 0E3F           00187         MOVLW   0X3F                    ;Reload povload to mask lower 6 bits of POV output
+000096 6E04           00188         MOVWF   POVLOW
+000098 0E60           00189         MOVLW   0X60                    ;Reload povhigh to mask 7th bit of POV output
+00009A 6E05           00190         MOVWF   POVHIGH
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00009C 2E02           00191         DECFSZ  SIGN_WIDTH              ;switch directions if right side of POV sign is reached
+00009E D7ED           00192         BRA             MAIN2
+0000A0 D7E4           00193         BRA             MAIN                    ;reload POV sign if end of sign is reached
+                      00194 ;scroll_left
+                      00195 ;       tblrd*-
+                      00196 ;       movff   tablat,porta
+                      00197 ;       bra             main2
+                      00198 ;no_scroll
+                      00199 ;       tblrd*
+                      00200 ;       movff   tablat,porta
+                      00201 ;       bra             main2
+                      00202 ;       
+                      00203 ;pov_string1 ;pov character data (string 1)
+                      00204 ;       de      0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00205 ;       de      0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00206 ;       de      0x7F,0x10,0x08,0x04,0x7F,0x00   ;N
+                      00207 ;       de      0x7F,0x49,0x49,0x49,0x36,0x00   ;B
+                      00208 ;       de      0x2F,0x00                                               ;i
+                      00209 ;       de      0x10,0x10,0x3F,0x10,0x10,0x00   ;t
+                      00210 ;       de      0x7E,0x01,0x0E,0x01,0x7E,0x00   ;W
+                      00211 ;       de      0x1F,0x11,0x11,0x1F,0x00                ;o
+                      00212 ;       de      0x1F,0x10,0x10,0x1F,0x00                ;n
+                      00213 ;       de      0x1F,0x11,0x11,0x7F,0x00                ;d
+                      00214 ;       de      0x1F,0x15,0x15,0x1D,0x00                ;e
+                      00215 ;       de      0x1F,0x10,0x10                                  ;r
+                      00216 ;       de      0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00217 ;       de      0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00218 
+                      00219 ;pov_string2    ;pov character data (string 2)
+                      00220 ;       de              0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00221 ;       de              0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00222 ;       de              0x00,0x7F,0x04,0x08,0x10,0x7F   ;N
+                      00223 ;       de              0x00,0x7F,0x49,0x49,0x49,0x36   ;B
+                      00224 ;       de              0x00,0x7A                                               ;i
+                      00225 ;       de              0x04,0x7E,0x04                                  ;t
+                      00226 ;       de              0x00,0x7F,0x40,0x38,0x40,0x3F   ;W
+                      00227 ;       de              0x00,0x7C,0x44,0x44,0x7C                ;o
+                      00228 ;       de              0x00,0x7C,0x04,0x04,0x7C                ;n
+                      00229 ;       de              0x00,0x7C,0x44,0x44,0x7F                ;d
+                      00230 ;       de              0x00,0x7C,0x54,0x54,0x5C                ;e
+                      00231 ;       de              0x00,0x7C,0x04,0x04                             ;r
+                      00232 ;       de              0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00233 ;       de              0x00,0x00,0x00,0x00,0x00                ;Buffer
+                      00234 ;end_string1
+                      00235         END
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  7
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+A                                 00000000
+ABDEN                             00000000
+ABDOVF                            00000007
+ACCESS                            00000000
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ACQT0                             00000003
+ACQT1                             00000004
+ACQT2                             00000005
+ACTVIE                            00000002
+ACTVIF                            00000002
+ADCAL                             00000006
+ADCON0                            00000FC2
+ADCON1                            00000FC1
+ADCS0                             00000000
+ADCS1                             00000001
+ADCS2                             00000002
+ADDEN                             00000003
+ADDR0                             00000000
+ADDR1                             00000001
+ADDR2                             00000002
+ADDR3                             00000003
+ADDR4                             00000004
+ADDR5                             00000005
+ADDR6                             00000006
+ADEN                              00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADIP                              00000006
+ADMSK1                            00000001
+ADMSK2                            00000002
+ADMSK3                            00000003
+ADMSK4                            00000004
+ADMSK5                            00000005
+ADON                              00000000
+ADRES                             00000FC3
+ADRESH                            00000FC4
+ADRESL                            00000FC3
+ALRMCFG                           00000F91
+ALRMEN                            00000007
+ALRMPTR0                          00000000
+ALRMPTR1                          00000001
+ALRMRPT                           00000F90
+ALRMVALH                          00000F8F
+ALRMVALL                          00000F8E
+AMASK0                            00000002
+AMASK1                            00000003
+AMASK2                            00000004
+AMASK3                            00000005
+AN0                               00000000
+AN1                               00000001
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  8
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+AN10                              00000001
+AN11                              00000002
+AN12                              00000000
+AN2                               00000002
+AN3                               00000003
+AN4                               00000005
+AN8                               00000002
+AN9                               00000003
+ANCON0                            00000F48
+ANCON1                            00000F49
+ARPT0                             00000000
+ARPT1                             00000001
+ARPT2                             00000002
+ARPT3                             00000003
+ARPT4                             00000004
+ARPT5                             00000005
+ARPT6                             00000006
+ARPT7                             00000007
+BANKED                            00000001
+BAUDCON                           00000F7E
+BAUDCON1                          00000F7E
+BAUDCON2                          00000F7C
+BAUDCTL                           00000F7E
+BCL1IE                            00000003
+BCL1IF                            00000003
+BCL1IP                            00000003
+BCL2IE                            00000006
+BCL2IF                            00000006
+BCL2IP                            00000006
+BCLIE                             00000003
+BCLIF                             00000003
+BCLIP                             00000003
+BF                                00000000
+BGVST                             00000006
+BOR                               00000000
+BRG16                             00000003
+BRGH                              00000002
+BSR                               00000FE0
+BTOEE                             00000004
+BTOEF                             00000004
+BTSEE                             00000007
+BTSEF                             00000007
+BUTTON1                           PORTC,0
+C                                 00000000
+C1INA                             00000000
+C1INB                             00000003
+C2INA                             00000001
+C2INB                             00000002
+CAL0                              00000000
+CAL1                              00000001
+CAL2                              00000002
+CAL3                              00000003
+CAL4                              00000004
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE  9
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CAL5                              00000005
+CAL6                              00000006
+CAL7                              00000007
+CCH0                              00000000
+CCH1                              00000001
+CCP1CON                           00000FBA
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1IP                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           00000FB4
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2IP                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1                             00000FBB
+CCPR1H                            00000FBC
+CCPR1L                            00000FBB
+CCPR2                             00000FB5
+CCPR2H                            00000FB6
+CCPR2L                            00000FB5
+CHIME                             00000006
+CHS0                              00000002
+CHS1                              00000003
+CHS2                              00000004
+CHS3                              00000005
+CK1                               00000006
+CKE                               00000006
+CKP                               00000004
+CLKI                              00000007
+CLKO                              00000006
+CM                                00000005
+CM1CON                            00000FD2
+CM1CON1                           00000FD2
+CM1IE                             00000005
+CM1IF                             00000005
+CM1IP                             00000005
+CM2CON                            00000FD1
+CM2CON1                           00000FD1
+CM2IE                             00000006
+CM2IF                             00000006
+CM2IP                             00000006
+CMPL0                             00000006
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CMPL1                             00000007
+CMSTAT                            00000F70
+CMSTATUS                          00000F70
+COE                               00000006
+CON                               00000007
+COUNTER                           00000003
+COUT1                             00000000
+COUT2                             00000001
+CPOL                              00000005
+CRC16EE                           00000002
+CRC16EF                           00000002
+CRC5EE                            00000001
+CRC5EF                            00000001
+CREF                              00000002
+CREN                              00000004
+CSRC                              00000007
+CTEDG1                            00000002
+CTEDG2                            00000003
+CTMUCONH                          00000FB3
+CTMUCONL                          00000FB2
+CTMUEN                            00000007
+CTMUICON                          00000FB1
+CTMUIE                            00000002
+CTMUIF                            00000002
+CTMUIP                            00000002
+CTMUSIDL                          00000005
+CTPLS                             00000002
+CTTRIG                            00000000
+CVR0                              00000000
+CVR1                              00000001
+CVR2                              00000002
+CVR3                              00000003
+CVRCON                            00000F53
+CVREF_MINUS                       00000002
+CVREN                             00000007
+CVROE                             00000006
+CVRR                              00000005
+CVRSS                             00000004
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DDRA                              TRISA
+DDRB                              TRISB
+DDRC                              TRISC
+DDRD                              TRISD
+DDRE                              TRISE
+DFN8EE                            00000003
+DFN8EF                            00000003
+DIR                               00000002
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+DLYCYC0                           00000004
+DLYCYC1                           00000005
+DLYCYC2                           00000006
+DLYCYC3                           00000007
+DLYINTEN                          00000001
+DMABCH                            00000F66
+DMABCL                            00000F67
+DMACON1                           00000F88
+DMACON2                           00000F86
+DMAEN                             00000000
+DONE                              00000001
+DS                                00000003
+DSBOR                             00000001
+DSCONH                            00000F4D
+DSCONL                            00000F4C
+DSEN                              00000007
+DSFLT                             00000007
+DSGPR0                            00000F4E
+DSGPR1                            00000F4F
+DSINT0                            00000000
+DSMCLR                            00000002
+DSPOR                             00000000
+DSRTC                             00000003
+DSULP                             00000005
+DSULPEN                           00000001
+DSWAKEH                           00000F4B
+DSWAKEL                           00000F4A
+DSWDT                             00000004
+DT1                               00000007
+DUPLEX0                           00000002
+DUPLEX1                           00000003
+D_A                               00000005
+D_MINUS                           00000004
+D_NOT_A                           00000005
+D_PLUS                            00000005
+ECCP1AS                           00000FBE
+ECCP1AS0                          00000004
+ECCP1AS1                          00000005
+ECCP1AS2                          00000006
+ECCP1ASE                          00000007
+ECCP1CON                          00000FBA
+ECCP1DEL                          00000FBD
+ECCP1OD                           00000000
+ECCP2AS                           00000FB8
+ECCP2AS0                          00000004
+ECCP2AS1                          00000005
+ECCP2AS2                          00000006
+ECCP2ASE                          00000007
+ECCP2CON                          00000FB4
+ECCP2DEL                          00000FB7
+ECCP2OD                           00000001
+EDG1POL                           00000004
+EDG1SEL0                          00000002
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+EDG1SEL1                          00000003
+EDG1STAT                          00000000
+EDG2POL                           00000007
+EDG2SEL0                          00000005
+EDG2SEL1                          00000006
+EDG2STAT                          00000001
+EDGEN                             00000003
+EDGSEQEN                          00000002
+EECON1                            00000FA6
+EECON2                            00000FA7
+ENDP0                             00000003
+ENDP1                             00000004
+ENDP2                             00000005
+ENDP3                             00000006
+END_STRING1                       0000085A
+END_STRING2                       000008BE
+END_STRING3                       00000900
+END_TABLE                         0000080E
+EPCONDIS                          00000003
+EPHSHK                            00000004
+EPINEN                            00000001
+EPOUTEN                           00000002
+EPSTALL                           00000000
+EVPOL0                            00000003
+EVPOL1                            00000004
+EXIT_TMR0                         00000034
+FAST                              00000001
+FERR                              00000002
+FREE                              00000004
+FRM0                              00000000
+FRM1                              00000001
+FRM10                             00000002
+FRM2                              00000002
+FRM3                              00000003
+FRM4                              00000004
+FRM5                              00000005
+FRM6                              00000006
+FRM7                              00000007
+FRM8                              00000000
+FRM9                              00000001
+FSEN                              00000002
+FSR0                              00000000
+FSR0H                             00000FEA
+FSR0L                             00000FE9
+FSR1                              00000001
+FSR1H                             00000FE2
+FSR1L                             00000FE1
+FSR2                              00000002
+FSR2H                             00000FDA
+FSR2L                             00000FD9
+GCEN                              00000007
+GIE                               00000007
+GIEH                              00000007
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+GIEL                              00000006
+GIE_GIEH                          00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HALFSEC                           00000003
+HLVDCON                           00000F85
+HLVDEN                            00000004
+HLVDIN                            00000005
+HLVDL0                            00000000
+HLVDL1                            00000001
+HLVDL2                            00000002
+HLVDL3                            00000003
+I2C_DAT                           00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+IDISSEN                           00000001
+IDLEIE                            00000004
+IDLEIF                            00000004
+IDLEN                             00000007
+INDF0                             00000FEF
+INDF1                             00000FE7
+INDF2                             00000FDF
+INITIALIZE                        00000036
+INT0                              00000000
+INT0E                             00000004
+INT0F                             00000001
+INT0IE                            00000004
+INT0IF                            00000001
+INT1E                             00000003
+INT1F                             00000000
+INT1IE                            00000003
+INT1IF                            00000000
+INT1IP                            00000006
+INT1P                             00000006
+INT2E                             00000004
+INT2F                             00000001
+INT2IE                            00000004
+INT2IF                            00000001
+INT2IP                            00000007
+INT2P                             00000007
+INT3E                             00000005
+INT3F                             00000002
+INT3IE                            00000005
+INT3IF                            00000002
+INT3IP                            00000001
+INT3P                             00000001
+INTCON                            00000FF2
+INTCON2                           00000FF1
+INTCON3                           00000FF0
+INTEDG0                           00000006
+INTEDG1                           00000005
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+INTEDG2                           00000004
+INTEDG3                           00000003
+INTERRUPT                         00000008
+INTLVL0                           00000000
+INTLVL1                           00000001
+INTLVL2                           00000002
+INTLVL3                           00000003
+INTSRC                            00000007
+IOLOCK                            00000000
+IPEN                              00000007
+IPR1                              00000F9F
+IPR2                              00000FA2
+IPR3                              00000FA5
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRNG0                             00000000
+IRNG1                             00000001
+IRVST                             00000005
+ITRIM0                            00000002
+ITRIM1                            00000003
+ITRIM2                            00000004
+ITRIM3                            00000005
+ITRIM4                            00000006
+ITRIM5                            00000007
+KBI0                              00000004
+KBI1                              00000005
+KBI2                              00000006
+KBI3                              00000007
+LATA                              00000F89
+LATA0                             00000000
+LATA1                             00000001
+LATA2                             00000002
+LATA3                             00000003
+LATA5                             00000005
+LATA6                             00000006
+LATA7                             00000007
+LATB                              00000F8A
+LATB0                             00000000
+LATB1                             00000001
+LATB2                             00000002
+LATB3                             00000003
+LATB4                             00000004
+LATB5                             00000005
+LATB6                             00000006
+LATB7                             00000007
+LATC                              00000F8B
+LATC0                             00000000
+LATC1                             00000001
+LATC2                             00000002
+LATC4                             00000004
+LATC5                             00000005
+LATC6                             00000006
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+LATC7                             00000007
+LVDIE                             00000002
+LVDIF                             00000002
+LVDIP                             00000002
+LVDSTAT                           00000006
+MAIN                              0000006A
+MAIN2                             0000007A
+MSK0                              00000000
+MSK1                              00000001
+MSK2                              00000002
+MSK3                              00000003
+MSK4                              00000004
+MSK5                              00000005
+MSK6                              00000006
+MSK7                              00000007
+N                                 00000004
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BOR                           00000000
+NOT_CM                            00000005
+NOT_DONE                          00000001
+NOT_PD                            00000002
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_RI                            00000004
+NOT_SS1                           00000005
+NOT_TO                            00000003
+NOT_TX8                           00000006
+NOT_UOE                           00000001
+NOT_W                             00000002
+NOT_WRITE                         00000002
+NO_BUTTON1                        00000026
+ODCON1                            00000F42
+ODCON2                            00000F41
+ODCON3                            00000F40
+OERR                              00000001
+OSC1                              00000007
+OSC2                              00000006
+OSCCON                            00000FD3
+OSCFIE                            00000007
+OSCFIF                            00000007
+OSCFIP                            00000007
+OSCTUNE                           00000F9B
+OSTS                              00000003
+OV                                00000003
+P                                 00000004
+P1DC0                             00000000
+P1DC1                             00000001
+P1DC2                             00000002
+P1DC3                             00000003
+P1DC4                             00000004
+P1DC5                             00000005
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+P1DC6                             00000006
+P1M0                              00000006
+P1M1                              00000007
+P1RSEN                            00000007
+P2DC0                             00000000
+P2DC1                             00000001
+P2DC2                             00000002
+P2DC3                             00000003
+P2DC4                             00000004
+P2DC5                             00000005
+P2DC6                             00000006
+P2M0                              00000006
+P2M1                              00000007
+P2RSEN                            00000007
+PADCFG1                           00000F3C
+PB1                               PBCTRL,1
+PBCTRL                            00000000
+PC                                00000FF9
+PCFG0                             00000000
+PCFG1                             00000001
+PCFG10                            00000002
+PCFG11                            00000003
+PCFG12                            00000004
+PCFG2                             00000002
+PCFG3                             00000003
+PCFG4                             00000004
+PCFG8                             00000000
+PCFG9                             00000001
+PCL                               00000FF9
+PCLATH                            00000FFA
+PCLATU                            00000FFB
+PD                                00000002
+PEIE                              00000006
+PEIE_GIEL                         00000006
+PEN                               00000002
+PGC                               00000006
+PGD                               00000007
+PIDEE                             00000000
+PIDEF                             00000000
+PIE1                              00000F9D
+PIE2                              00000FA0
+PIE3                              00000FA3
+PIR1                              00000F9E
+PIR2                              00000FA1
+PIR3                              00000FA4
+PKTDIS                            00000004
+PLLEN                             00000006
+PLUSW0                            00000FEB
+PLUSW1                            00000FE3
+PLUSW2                            00000FDB
+PMPTTL                            00000000
+POR                               00000001
+PORTA                             00000F80
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PORTB                             00000F81
+PORTC                             00000F82
+POSTDEC0                          00000FED
+POSTDEC1                          00000FE5
+POSTDEC2                          00000FDD
+POSTINC0                          00000FEE
+POSTINC1                          00000FE6
+POSTINC2                          00000FDE
+POVCTRL                           00000001
+POVDIR                            POVCTRL,0
+POVHIGH                           00000005
+POVLOW                            00000004
+POVSEGS1                          43
+POVSEGS2                          91
+POVSEGS3                          57
+POVSEGSL                          189
+POVSEGSR                          67
+POV_STRING1                       0000080E
+POV_STRING2                       0000085A
+POV_STRING3                       000008BE
+POV_TABLE                         00000800
+PPB0                              00000000
+PPB1                              00000001
+PPBI                              00000001
+PPBRST                            00000006
+PPSCON                            00000EFF
+PR2                               00000FCB
+PR4                               00000F77
+PREINC0                           00000FEC
+PREINC1                           00000FE4
+PREINC2                           00000FDC
+PREVPB1                           PBCTRL,0
+PROD                              00000FF3
+PRODH                             00000FF4
+PRODL                             00000FF3
+PSA                               00000003
+PSS1AC0                           00000002
+PSS1AC1                           00000003
+PSS1BD0                           00000000
+PSS1BD1                           00000001
+PSS2AC0                           00000002
+PSS2AC1                           00000003
+PSS2BD0                           00000000
+PSS2BD1                           00000001
+PSTR1CON                          00000FBF
+PSTR2CON                          00000FB9
+PWM1CON                           00000FBD
+PWM2CON                           00000FB7
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RBIP                              00000000
+RBPU                              00000007
+RC0                               00000000
+RC1                               00000001
+RC1IE                             00000005
+RC1IF                             00000005
+RC1IP                             00000005
+RC2                               00000002
+RC2IE                             00000005
+RC2IF                             00000005
+RC2IP                             00000005
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCIP                              00000005
+RCON                              00000FD0
+RCREG                             00000FAF
+RCREG1                            00000FAF
+RCREG2                            00000FAA
+RCSTA                             00000FAC
+RCSTA1                            00000FAC
+RCSTA2                            00000F9C
+RCV                               00000005
+RD16                              00000001
+READ_WRITE                        00000002
+REFO                              00000002
+REFOCON                           00000F3D
+REGSLP                            00000007
+RELEASE                           00000000
+RESUME                            00000002
+RI                                00000004
+RODIV0                            00000000
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 19
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RODIV1                            00000001
+RODIV2                            00000002
+RODIV3                            00000003
+ROON                              00000007
+ROSEL                             00000004
+ROSSLP                            00000005
+RP0                               00000000
+RP1                               00000001
+RP10                              00000007
+RP11                              00000000
+RP12                              00000001
+RP13                              00000002
+RP17                              00000006
+RP18                              00000007
+RP2                               00000005
+RP3                               00000000
+RP4                               00000001
+RP5                               00000002
+RP6                               00000003
+RP7                               00000004
+RP8                               00000005
+RP9                               00000006
+RPINR1                            00000EE7
+RPINR12                           00000EF2
+RPINR13                           00000EF3
+RPINR16                           00000EF6
+RPINR17                           00000EF7
+RPINR2                            00000EE8
+RPINR21                           00000EFB
+RPINR22                           00000EFC
+RPINR23                           00000EFD
+RPINR24                           00000EFE
+RPINR3                            00000EE9
+RPINR4                            00000EEA
+RPINR6                            00000EEC
+RPINR7                            00000EED
+RPINR8                            00000EEE
+RPOR0                             00000EC6
+RPOR1                             00000EC7
+RPOR10                            00000ED0
+RPOR11                            00000ED1
+RPOR12                            00000ED2
+RPOR13                            00000ED3
+RPOR17                            00000ED7
+RPOR18                            00000ED8
+RPOR2                             00000EC8
+RPOR3                             00000EC9
+RPOR4                             00000ECA
+RPOR5                             00000ECB
+RPOR6                             00000ECC
+RPOR7                             00000ECD
+RPOR8                             00000ECE
+RPOR9                             00000ECF
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 20
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RSEN                              00000001
+RTCC                              00000001
+RTCCAL                            00000F3E
+RTCCFG                            00000F3F
+RTCCIE                            00000000
+RTCCIF                            00000000
+RTCCIP                            00000000
+RTCEN                             00000007
+RTCOE                             00000002
+RTCPTR0                           00000000
+RTCPTR1                           00000001
+RTCSYNC                           00000004
+RTCVALH                           00000F99
+RTCVALL                           00000F98
+RTCWDIS                           00000000
+RTCWREN                           00000005
+RTSECSEL0                         00000001
+RTSECSEL1                         00000002
+RX1                               00000007
+RX9                               00000006
+RX9D                              00000000
+RXADDRH                           00000F68
+RXADDRL                           00000F69
+RXDTP                             00000005
+RXINC                             00000004
+R_NOT_W                           00000002
+R_W                               00000002
+S                                 00000003
+SCK1                              00000004
+SCL1                              00000004
+SCROLL_RIGHT                      00000082
+SCS0                              00000000
+SCS1                              00000001
+SDA1                              00000005
+SDI1                              00000005
+SDO1                              00000007
+SE0                               00000005
+SEGCOUNT                          1
+SEN                               00000000
+SENDB                             00000003
+SET_PREVPB1                       00000020
+SIGN_WIDTH                        00000002
+SMP                               00000007
+SOFIE                             00000006
+SOFIF                             00000006
+SP0                               00000000
+SP1                               00000001
+SP2                               00000002
+SP3                               00000003
+SP4                               00000004
+SPBRG                             00000FB0
+SPBRG1                            00000FB0
+SPBRG2                            00000FAB
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 21
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SPBRGH                            00000F7F
+SPBRGH1                           00000F7F
+SPBRGH2                           00000F7D
+SPEN                              00000007
+SPI1OD                            00000000
+SPI2OD                            00000001
+SREN                              00000005
+SSCON0                            00000006
+SSCON1                            00000007
+SSP1ADD                           00000FC8
+SSP1BUF                           00000FC9
+SSP1CON1                          00000FC6
+SSP1CON2                          00000FC5
+SSP1IE                            00000003
+SSP1IF                            00000003
+SSP1IP                            00000003
+SSP1STAT                          00000FC7
+SSP2ADD                           00000F74
+SSP2BUF                           00000F75
+SSP2CON1                          00000F72
+SSP2CON2                          00000F71
+SSP2IE                            00000007
+SSP2IF                            00000007
+SSP2IP                            00000007
+SSP2STAT                          00000F73
+SSPADD                            00000FC8
+SSPBUF                            00000FC9
+SSPCON1                           00000FC6
+SSPCON2                           00000FC5
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPIP                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPOV                             00000006
+SSPSTAT                           00000FC7
+STALLIE                           00000005
+STALLIF                           00000005
+STATUS                            00000FD8
+STKFUL                            00000007
+STKPTR                            00000FFC
+STKUNF                            00000006
+STRA                              00000000
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+SUSPND                            00000001
+SWDTE                             00000000
+SWDTEN                            00000000
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 22
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SYNC                              00000004
+T08BIT                            00000006
+T0CON                             00000FD5
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0IP                              00000002
+T0PS0                             00000000
+T0PS1                             00000001
+T0PS2                             00000002
+T0SE                              00000004
+T1CK                              00000000
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000FCD
+T1DONE                            00000003
+T1GCON                            00000F9A
+T1GGO                             00000003
+T1GGO_T1DONE                      00000003
+T1GPOL                            00000006
+T1GSPM                            00000004
+T1GSS0                            00000000
+T1GSS1                            00000001
+T1GTM                             00000005
+T1GVAL                            00000002
+T1OSCEN                           00000003
+T1OSI                             00000001
+T1OSO                             00000000
+T1RUN                             00000004
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000FCA
+T2OUTPS0                          00000003
+T2OUTPS1                          00000004
+T2OUTPS2                          00000005
+T2OUTPS3                          00000006
+T3CCP1                            00000000
+T3CCP2                            00000001
+T3CKPS0                           00000004
+T3CKPS1                           00000005
+T3CON                             00000F79
+T3DONE                            00000003
+T3GCON                            00000F97
+T3GGO                             00000003
+T3GGO_T3DONE                      00000003
+T3GPOL                            00000006
+T3GSPM                            00000004
+T3GSS0                            00000000
+T3GSS1                            00000001
+T3GTM                             00000005
+T3GVAL                            00000002
+T3SYNC                            00000002
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 23
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T4CKPS0                           00000000
+T4CKPS1                           00000001
+T4CON                             00000F76
+T4OUTPS0                          00000003
+T4OUTPS1                          00000004
+T4OUTPS2                          00000005
+T4OUTPS3                          00000006
+TABLAT                            00000FF5
+TBLPTR                            00000FF6
+TBLPTRH                           00000FF7
+TBLPTRL                           00000FF6
+TBLPTRU                           00000FF8
+TCLKCON                           00000F52
+TGEN                              00000004
+TIMER_HIGH                        0XFF
+TIMER_LOW                         0XA1
+TMR0H                             00000FD7
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR0IP                            00000002
+TMR0L                             00000FD6
+TMR0ON                            00000007
+TMR1CS0                           00000006
+TMR1CS1                           00000007
+TMR1GE                            00000007
+TMR1H                             00000FCF
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1IP                            00000000
+TMR1L                             00000FCE
+TMR1ON                            00000000
+TMR2                              00000FCC
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2IP                            00000001
+TMR2ON                            00000002
+TMR3CS0                           00000006
+TMR3CS1                           00000007
+TMR3GE                            00000007
+TMR3GIE                           00000001
+TMR3GIF                           00000001
+TMR3GIP                           00000001
+TMR3H                             00000F7B
+TMR3IE                            00000001
+TMR3IF                            00000001
+TMR3IP                            00000001
+TMR3L                             00000F7A
+TMR3ON                            00000000
+TMR4                              00000F78
+TMR4IE                            00000003
+TMR4IF                            00000003
+TMR4IP                            00000003
+TMR4ON                            00000002
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 24
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TO                                00000003
+TOS                               00000FFD
+TOSH                              00000FFE
+TOSL                              00000FFD
+TOSU                              00000FFF
+TRISA                             00000F92
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000F93
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000F94
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRMT                              00000001
+TRNIE                             00000003
+TRNIF                             00000003
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TUN5                              00000005
+TX1                               00000006
+TX1IE                             00000004
+TX1IF                             00000004
+TX1IP                             00000004
+TX2IE                             00000004
+TX2IF                             00000004
+TX2IP                             00000004
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXADDRH                           00000F6A
+TXADDRL                           00000F6B
+TXCKP                             00000004
+TXD8                              00000000
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 25
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXINC                             00000005
+TXIP                              00000004
+TXREG                             00000FAE
+TXREG1                            00000FAE
+TXREG2                            00000FA9
+TXSTA                             00000FAD
+TXSTA1                            00000FAD
+TXSTA2                            00000FA8
+U1OD                              00000000
+U2OD                              00000001
+UA                                00000001
+UADDR                             00000F38
+UCFG                              00000F39
+UCON                              00000F65
+UEIE                              00000F37
+UEIR                              00000F63
+UEP0                              00000F26
+UEP1                              00000F27
+UEP10                             00000F30
+UEP11                             00000F31
+UEP12                             00000F32
+UEP13                             00000F33
+UEP14                             00000F34
+UEP15                             00000F35
+UEP2                              00000F28
+UEP3                              00000F29
+UEP4                              00000F2A
+UEP5                              00000F2B
+UEP6                              00000F2C
+UEP7                              00000F2D
+UEP8                              00000F2E
+UEP9                              00000F2F
+UERRIE                            00000001
+UERRIF                            00000001
+UFRM                              00000F60
+UFRMH                             00000F61
+UFRML                             00000F60
+UIE                               00000F36
+UIR                               00000F62
+ULPEN                             00000002
+ULPLVL                            00000005
+ULPSINK                           00000001
+ULPWDIS                           00000002
+ULPWU                             00000000
+UOEMON                            00000006
+UPDATE                            0000002A
+UPDATEPOV                         POVCTRL,1
+UPUEN                             00000004
+URSTIE                            00000000
+URSTIF                            00000000
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 26
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+USBEN                             00000003
+USBIE                             00000004
+USBIF                             00000004
+USBIP                             00000004
+USTAT                             00000F64
+UTEYE                             00000007
+UTRDIS                            00000003
+VBG2EN                            00000006
+VBGEN                             00000007
+VCFG0                             00000006
+VCFG1                             00000007
+VDIRMAG                           00000007
+VM                                00000004
+VMO                               00000002
+VP                                00000005
+VPO                               00000003
+VREF_MINUS                        00000002
+VREF_PLUS                         00000003
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000FC0
+WPROG                             00000005
+WR                                00000001
+WREG                              00000FE8
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+Z                                 00000002
+_DEVID1                           003FFFFE
+_DEVID2                           003FFFFF
+__18F25J50                        00000001
+__DEBUG                           1
+
+
+MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
+
+0000 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0040 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0080 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XX-------------- ----------------
+0800 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0840 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0880 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+08C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+
+All other memory blocks unused.
+
+Program Memory Bytes Used:   418
+Program Memory Bytes Free: 32350
+
+
+MPASM  5.35beta                    CARDPOV1_4.ASM   10-9-2010  18:19:35         PAGE 27
+
+
+
+
+
+Errors   :     0
+Warnings :     1 reported,     0 suppressed
+Messages :     1 reported,     0 suppressed
+
+

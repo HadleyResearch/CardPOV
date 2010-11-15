@@ -1,0 +1,88 @@
+MPLINK 4.35, Linker
+Linker Map File - Created Sat Apr 03 19:58:41 2010
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x000000
+                   .org_2       code   0x000000    program   0x000008
+                   .org_3       code   0x000008    program   0x000118
+                   .org_1       code   0x000800    program   0x00012e
+.config_007FF8_CARDPOV1_3.O    romdata   0x007ff8    program   0x000001
+.config_007FF9_CARDPOV1_3.O    romdata   0x007ff9    program   0x000001
+.config_007FFA_CARDPOV1_3.O    romdata   0x007ffa    program   0x000001
+.config_007FFB_CARDPOV1_3.O    romdata   0x007ffb    program   0x000001
+.config_007FFC_CARDPOV1_3.O    romdata   0x007ffc    program   0x000001
+.config_007FFD_CARDPOV1_3.O    romdata   0x007ffd    program   0x000001
+.config_007FFE_CARDPOV1_3.O    romdata   0x007ffe    program   0x000001
+.config_007FFF_CARDPOV1_3.O    romdata   0x007fff    program   0x000001
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x00011f      
+                            0x000800    0x00092d      
+                            0x007ff8    0x007fff      
+            598 out of 32770 program addresses used, program memory utilization is 1%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+             END_LOAD_POV   0x00011e    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+              END_STRING1   0x000864    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              END_STRING2   0x0008c8    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              END_STRING3   0x00092e    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+                END_TABLE   0x00080e    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+                EXIT_TMR0   0x000034    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+               INITIALIZE   0x000036    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                 INIT_POV   0x00007a    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                 LOAD_POV   0x0000f4    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+              LOAD_POVDAT   0x0000b2    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                     MAIN   0x000092    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                    MAIN2   0x000096    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                    MAIN3   0x0000a6    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+               NO_BUTTON1   0x000026    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+              POV_STRING1   0x00080e    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              POV_STRING2   0x000864    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              POV_STRING3   0x0008c8    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+                POV_TABLE   0x000800    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+             RELOAD_TABLE   0x0000c2    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+             SCROLL_RIGHT   0x0000d4    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+              SET_PREVPB1   0x000020    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+           TMR0_INTERRUPT   0x000008    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                   UPDATE   0x00002a    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+           TMR0_INTERRUPT   0x000008    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+              SET_PREVPB1   0x000020    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+               NO_BUTTON1   0x000026    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                   UPDATE   0x00002a    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                EXIT_TMR0   0x000034    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+               INITIALIZE   0x000036    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                 INIT_POV   0x00007a    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                     MAIN   0x000092    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                    MAIN2   0x000096    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                    MAIN3   0x0000a6    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+              LOAD_POVDAT   0x0000b2    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+             RELOAD_TABLE   0x0000c2    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+             SCROLL_RIGHT   0x0000d4    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                 LOAD_POV   0x0000f4    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+             END_LOAD_POV   0x00011e    program     static C:\Users\George\Documents\Source\PIC18\POV\cardpov1_3.asm
+                POV_TABLE   0x000800    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+                END_TABLE   0x00080e    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              POV_STRING1   0x00080e    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              POV_STRING2   0x000864    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              END_STRING1   0x000864    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              POV_STRING3   0x0008c8    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              END_STRING2   0x0008c8    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+              END_STRING3   0x00092e    program     static C:\Users\George\Documents\Source\PIC18\POV\POV_TABLE3.INC
+
+

@@ -1,0 +1,51 @@
+% File: bug_tracker_lbr.tex
+% Description: TeX commands used for the bug tracker in the Open Documentation System
+% Author: George Hadley
+% Website: http://nbitwonder.com
+% Notes:
+% 1) This document was written using the LaTeX typesetting language. For more help
+%	with the LaTeX typesetting language, consult: http://en.wikibooks.org/wiki/LaTeX/
+% 2) This file needs to be compiled with pdfLaTeX (does not appear to be compatible with
+%	pdfTeX at the present time
+% Version: 0.0
+% Last Modified: 1-02-2010
+
+%Variable declarations: \bugdescription command
+
+% Command: \bugdescription
+% Description: Command for bug descriptions
+% Usage: \bugdescription{Description}{Reproduction} where
+%	Description is a paragraph description of the bugs
+%	Reproduction is all the necessary steps/directions to reproduce the error
+\newcommand{\bugdescription}[2]{
+\textbf{Description:} #1 \\
+\textbf{Reproduction:} #2 \\
+\textbf{Bug Resolution Status:} \\
+}
+
+% Variable Declarations: \bugupdate environment
+
+% Environment: \bugupdate
+% Description: Creates a update for use in the Bug reports
+% Usage: \projnbtagline{Entry#}{Date} where
+% 	Entry# is the number of the current entry
+%	Date is the date of the current entry
+\newenvironment{bugupdate}[2]
+{
+\noindent
+\textbf{Entry:} #1
+\textbf{Date:} #2\\
+\indent
+}
+{ }
+
+%Variable declarations: \bugentry environment
+
+% Environment: \bugentry
+% Description: Environment defined for bug report bug entries
+% Usage: \begin{bugentry}{Bug}{Version} where
+% 	Bug is a brief tagline of the bug
+%	Version is the version of the project for which the bug applies
+\newenvironment{bugentry}[2]
+{\noindent\framebox[\textwidth]{\textbf{Bug:} #1 \textbf{Version:} #2\hfill}\\ \\*}
+{ }

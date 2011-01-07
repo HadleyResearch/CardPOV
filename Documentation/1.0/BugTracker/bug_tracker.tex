@@ -1,0 +1,82 @@
+% File: bug_tracker.tex
+% Description: TeX file for generating bug tracker (template) 
+% Author: George Hadley
+% Website: http://nbitwonder.com
+% Notes:
+% 1) This document is written using the LaTeX typesetting language. For a beginner's
+%	guide to the LaTeX typesetting language, consult http://en.wikibooks.org/wiki/LaTeX
+% 2) This document needs to be compiled using pdfLaTeX. It is not compatible with pdfTeX 
+%	at the present time.
+% 3) This document utilizes the nbwheader function, located in the doc_header.tex file.
+%	This file is located at /path-to-documentation-templates/lbr/doc_header.tex
+% 4) This document utilizes commands and environments defined in the bug_tracker_lbr.tex file.
+%	This file is located at ./lbr/bug_tracker_lbr.tex
+% Version: 0.2
+% Last Modified: 1-04-2010
+\documentclass[12pt,letterpaper,onecolumn]{article}
+\usepackage{tikz}
+%\usepackage{kpfonts}  %Uncomment if kpfonts is installed and you want to use a non-default font
+\usepackage{verbatim}
+\usepackage{fullpage}
+\usepackage{hyperref}
+
+%Path to global documentation library functions
+%Modify this to /path-to-documentation-templates/lbr
+\newcommand{\globallbr}{../lbr}
+
+\begin{comment}
+  Hyperref settings: settings for the hyperref hyperlink package.
+  For a more detailed listing of available settings, consult 
+  	http://en.wikibooks.org/wiki/LaTeX/Hyperlinks#Customization
+
+  IMPORTANT: For your document, modify the pdftitle, pdfauthor, pdfsubject,
+	and pdfkeywords options to tailor to your document
+\end{comment}
+\hypersetup{
+	bookmarks=true, 					%Enable pdf bookmarks
+	pdfborder={0,0,0},					%Disable borders around links
+	pdftitle={Bug Tracker (template)},			%Name of PDF document
+	pdfauthor={George Hadley},				%Author of PDF document
+	pdfsubject={Embedded Electronics},		%Subject of PDF document
+	pdfkeywords={diy,electronics,nbitwonder},	%Keywords for PDF document
+	colorlinks={true},					%Enable colored links
+	linkcolor=red,						%Internal link color
+	citecolor=green,						%Citation link color
+	filecolor=blue,						%File link color
+	urlcolor=blue						%URL link color
+}
+
+\input{\globallbr/doc_header.tex}
+\input{\globallbr/aliases.tex}
+\input{lbr/bug_tracker_lbr.tex}
+
+\begin{document}
+%Add header/title page here
+\nbwheader{Bug Tracker}{ProjectName}{ProjectVersion}
+\\*
+%Consider adding a bug index here
+ 
+%Add bug entries here. A bug entry should contain a brief description of the bug/error, steps for
+%     reproducing the error, the relevant project version(s)/revision(s) containing the error, and
+%     dated entries showing the progress towards resolving the error.
+\begin{bugentry}{Example Bug}{Beta}
+\bugdescription{The bug involves the plexiplator agitating the wabbledanger in a very gobblebuster way.}{You get the error by putting the whirligig in the doohickey and then jabberwockeying it}
+\begin{bugupdate}{1}{12/31/2010}
+I started working on the bug, and it didn't work! grrrrrr
+\end{bugupdate}
+
+\begin{bugupdate}{2}{1/03/2011}
+I started working on the bug, and it didn't work! grrrrrr
+\end{bugupdate}
+
+\begin{bugupdate}{3}{1/17/2011}
+I started working on the bug, and it didn't work! grrrrrr
+\end{bugupdate}
+
+\begin{bugupdate}{4}{1/23/2011}
+I fixed the bug! Horray!
+\end{bugupdate}
+
+\end{bugentry}
+
+\end{document}

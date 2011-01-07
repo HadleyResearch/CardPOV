@@ -1,0 +1,41 @@
+% File: project_notebook_lbr.tex
+% Description: TeX commands used for the project notebook in the Open 
+%	Documentation System
+% Author: George Hadley
+% Website: http://nbitwonder.com
+% Notes:
+% 1) This document was written using the LaTeX typesetting language. For more help
+%	with the LaTeX typesetting language, consult: http://en.wikibooks.org/wiki/LaTeX/
+% 2) This file needs to be compiled with pdfLaTeX (does not appear to be compatible with
+%	pdfTeX at the present time
+% Version: 0.0
+% Last Modified: 12-28-2010
+
+% Variable Declarations: \projnbtagline command
+
+% Command: \projnbtagline
+% Description: Creates a tagline for use in the Project Notebook entries
+% Usage: \projnbtagline{Entry#}{Date}{Version}{Title} where
+% 	Entry# is the number of the current entry
+%	Date is the date of the current entry
+%	Version is the version number of the current entry (major and minor version)
+%	Title is a short, descriptive title of the project entry
+\newcommand{\projnbtagline}[4]
+{
+\textbf{Entry:} #1 \textbf{Date:} #2 \textbf{Version:} #3 \textbf{Title:} #4
+\hfill
+}
+
+%Variable declarations: \nbentry environment
+
+% Environment: nbentry
+% Description: Environment defined for project notebook entries
+% Usage: \begin{nbentry}{Entry#}{Date}{Version}{Title} where
+% 	Entry# is the number of the current entry
+%	Date is the date of the current entry
+%	Version is the version number of the current entry (major and minor version)
+%	Title is a short, descriptive title of the project entry
+
+\newenvironment{nbentry}[4]
+{\noindent\framebox[\textwidth]{\projnbtagline{#1}{#2}{#3}{#4}}\hfill\newline}
+{\hfill\newline}

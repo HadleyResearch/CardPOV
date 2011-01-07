@@ -1,0 +1,108 @@
+% File: project_notebook.tex
+% Description: TeX file to generate Project Notebook (template)
+% Author: George Hadley
+% Website: http://nbitwonder.com
+% Notes:
+% 1) This document is written using the LaTeX typesetting language. For more information on
+%	LaTeX, consult http://en.wikibooks.org/wiki/LaTeX/
+% 2) This document needs to be compiled using pdfLaTeX. It is not supported with pdfTeX
+%	at the present time
+% 3) This document utilizes the \nbwheader command created in doc_header.tex. By default,
+%	this file is located at:
+%	/path-to-documentation-templates/lbr/doc_header.tex
+% 4) This document utilizes commands and environments created in projnb_lbr.tex. By default,
+%	this file is located at:
+%	/path-to-documentation-templates/lbr/projnb_lbr.tex
+% Version: 0.1
+% Last Modified: 1-04-2010
+\documentclass[12pt,letterpaper,onecolumn]{article}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subfig}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+%\usepackage{kpfonts}  %Uncomment if kpfonts is installed and you want to use a non-default font
+\usepackage{verbatim}
+\usepackage{fullpage}
+\usepackage{hyperref}
+
+%Path to global documentation library functions
+%Modify this to /path-to-documentation-templates/lbr
+\newcommand{\globallbr}{../lbr}
+
+%Page layout settings
+\setlength{\voffset}{-10pt}
+\setlength{\headsep}{20pt}
+\setlength{\headheight}{15pt}
+\setlength{\topmargin}{-20pt}
+
+\begin{comment}
+  Hyperref settings: settings for the hyperref hyperlink package.
+  For a more detailed listing of available settings, consult 
+  	http://en.wikibooks.org/wiki/LaTeX/Hyperlinks#Customization
+
+  IMPORTANT: For your document, modify the pdftitle, pdfauthor, pdfsubject,
+	and pdfkeywords options to tailor to your document
+\end{comment}
+\hypersetup{
+	bookmarks=true, 					%Enable pdf bookmarks
+	pdfborder={0,0,0},					%Disable borders around links
+	pdftitle={Project Notebook (template)},		%Name of PDF document
+	pdfauthor={George Hadley},				%Author of PDF document
+	pdfsubject={Embedded Electronics},		%Subject of PDF document
+	pdfkeywords={diy,electronics,nbitwonder},	%Keywords for PDF document
+	colorlinks={true},					%Enable colored links
+	linkcolor=red,						%Internal link color
+	citecolor=green,						%Citation link color
+	filecolor=blue,						%File link color
+	urlcolor=blue						%URL link color
+}
+\input{\globallbr/doc_header.tex}
+\input{\globallbr/aliases.tex}
+\input{lbr/project_notebook_lbr.tex}
+
+%Modify these to reflect your documentation
+\newcommand{\documentationtype}{Project Notebook}
+\newcommand{\projectname}{ProjectName  }
+\newcommand{\projectversion}{ProjectVersion  }
+
+%Header/Footer Definitions
+\pagestyle{fancy}
+\lhead{ }
+\chead{ }
+\rhead{\projectname  v\projectversion  \documentationtype}
+\lfoot{\href{http://nbitwonder.com}{http://nbitwonder.com} }
+\cfoot{\thepage}
+\rfoot{[Insert Copyright Here]}
+
+\begin{document}
+\thispagestyle{plain}
+% Insert title page or header here
+\nbwheader{\documentationtype}{\projectname}{\projectversion}
+% Insert optional project index here
+% For long projects, it is recommended that project entries be indexed
+%	by entry, week, month, or year (or a combination of the above)
+
+% Project Notebook entries
+% Project Notebook entries should be enclosed in boxes and contain a tagline
+%	detailing the entry number, date, revision (project minor version), and 
+%	a short, descriptive title
+\begin{nbentry}{001}{12/28/2010}{0.00}{Example entry}
+\\ This is a test. This is a test. This is a test. This is a test. This is a test. This is a test. \\This is a test.\\
+
+\begin{figure}[h!]
+    \centering
+        \includegraphics{./img/sample_picture.png}
+        \caption{A sample image for a project notebook}
+\end{figure}
+\end{nbentry}
+
+\newpage
+Header/Footer example
+% Sources Cited
+% Add a section detailing all external source citations. The IEEE citation
+%	style is recommended. For guidelines on using the IEEE citation style,
+%	refer to
+%   http://www.ieee.org/portal/cms_docs_iportals/iportals/publications/authors/transjnl/stylemanual.pdf
+
+\end{document}

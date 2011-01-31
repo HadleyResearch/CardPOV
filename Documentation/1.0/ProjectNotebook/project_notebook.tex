@@ -21,7 +21,7 @@
 \usepackage{subfig}
 \usepackage{tikz}
 \usepackage{fancyhdr}
-%\usepackage{kpfonts}  %Uncomment if kpfonts is installed and you want to use a non-default font
+\usepackage{kpfonts}  %Uncomment if kpfonts is installed and you want to use a non-default font
 \usepackage{verbatim}
 \usepackage{fullpage}
 \usepackage{hyperref}
@@ -63,8 +63,8 @@
 
 %Modify these to reflect your documentation
 \newcommand{\documentationtype}{Project Notebook}
-\newcommand{\projectname}{ProjectName  }
-\newcommand{\projectversion}{ProjectVersion  }
+\newcommand{\projectname}{CardPOV  }
+\newcommand{\projectversion}{1.0  }
 
 %Header/Footer Definitions
 \pagestyle{fancy}
@@ -73,7 +73,7 @@
 \rhead{\projectname  v\projectversion  \documentationtype}
 \lfoot{\href{http://nbitwonder.com}{http://nbitwonder.com} }
 \cfoot{\thepage}
-\rfoot{[Insert Copyright Here]}
+\rfoot{\copyright 2011 NBitWonder, LLC}
 
 \begin{document}
 \thispagestyle{plain}
@@ -87,18 +87,48 @@
 % Project Notebook entries should be enclosed in boxes and contain a tagline
 %	detailing the entry number, date, revision (project minor version), and 
 %	a short, descriptive title
-\begin{nbentry}{001}{12/28/2010}{0.00}{Example entry}
-\\ This is a test. This is a test. This is a test. This is a test. This is a test. This is a test. \\This is a test.\\
-
-\begin{figure}[h!]
-    \centering
-        \includegraphics{./img/sample_picture.png}
-        \caption{A sample image for a project notebook}
-\end{figure}
+\begin{nbentry}{001}{10/19/2009}{1.00}{Initial Design}
+\underline{Hardware Section:} \\
+\textbf{Microcontroller:} A microcontroller with onboard USB and sufficient memory space for future code
+	features is desired. For this, the \textbf{PIC18F25J50}, featuring 32k of flash and 2k of data memory,
+	as well as onboard USB, will be used. \\
+\textbf{Power Source:} A slim power source with sufficient capacity to run the onboard circuitry is desired.
+	For this, a \textbf{CR2032} coin cell battery, providing 3V power and a 230mAh capacity, will be used. \\
+\textbf{LEDs:} Generic surface mount LEDs \\
+\textbf{Switches:} Generic tactile switches
+\hfill\newline\hfill\newline
+\noindent\underline{Firmware:}
+Version 1 will make use primarily of the timer0 peripheral to coordinate the LED pulses. For static timing
+	purposes, it will be assumed that the POV will be moved repetitively through a linear path approximately
+	30" in length. POV characters will be stored in the onboard data EEPROM memory. Target frequency of
+	operation is 8MHz.
+\hfill\newline\hfill\newline
+\noindent\underline{Pin Usage:}
+Of particular importance for the initial layout of the CardPOV, pins should be selected in such a way so as to
+	not conflict with future pin needs. For this reason, pins that are needed for the USB, comparator, and
+	ADC should not be used. Initial pin declarations are as follows:
+	\hfill\newline\hfill\newline
+	\noindent
+	Pushbutton 1: RC0 (pin 11) \\
+	Pushbutton 2 (available): RC1 (pin 12) \\
+	Pushbutton 3 (available): RC2 (pin 13) \\
+	POV LEDs: RB5-RB0, RC7, RC6 (pins 26-21, 18, 17)
 \end{nbentry}
 
-\newpage
-Header/Footer example
+\begin{nbentry}{002}{1/11/2010}{1.00}{Ordering and PCB Errors}
+Work continued on CardPOV v1 yesterday, but was quickly brought to a halt when the following problems
+arose:
+\begin{enumerate}
+\item An ordering error resulted in the accidental purchase of PIC18LF25J50 microcontrollers instead of 
+PIC18F25J50 microcontrollers
+\item A second ordering error resulted in the accidental procurement of 0.75\ohm resistors instead of 
+75\ohm resistors
+\item In the PCB layout, ground was referred to by 2 different names (GND and VSS), and as such these 2 nets
+were never connected, resulting in incomplete circuit connections to the LEDs.
+\end{enumerate}
+To help mitigate these problems in the future, I plan to check orders and PCB layouts more carefully.
+\end{nbentry}
+
 % Sources Cited
 % Add a section detailing all external source citations. The IEEE citation
 %	style is recommended. For guidelines on using the IEEE citation style,

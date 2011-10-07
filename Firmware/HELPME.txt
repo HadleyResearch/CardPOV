@@ -1,0 +1,22 @@
+File: HELPME.txt
+Description: This file contains instructions for users and developers to help
+    navigate the standard NBitWonder project hierarchy. Instructions are
+    provided concerning what the specified directory hierarchy contains and
+    what files should be included.
+
+Current Location: CardPOV/Firmware
+Description of hierarchy:
+    The Firmware hierarchy contains any and all embedded firmware utilized in
+your project. Firmware is any and all code utilized by embedded electronics
+(microcontroller code, FPGA/CPLD source code, memory images or databases), but
+DOES NOT include PC or server-side software such as tools, utilities, drivers,
+graphical user interfaces, etc. -- these items are placed in the 'Software'
+hierarchy.
+    The Firmware hierarchy contains separate sub-hierarchies for each version
+of the project firmware. NBitWonder versioning starts at 1.0, adding 1 for 
+major versions and 0.1 for minor versions. All versions are contained in the
+toplevel Firmware hierarchy (1.0, 1.1, 1.2, 2.0, 2.1, etc.). If the project is
+large (i.e. many minor versions for each major version), consider placing major
+versions at the Firmware toplevel and minor versions in sub-hierarchies. Within
+each hierarchy include separate folders for microcontroller code, fpga code,
+cpld code, memory images, etc.

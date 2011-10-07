@@ -1,0 +1,28 @@
+File: HELPME.txt
+Description: 
+    This file contains instructions for users and developers to help navigate
+  the standard NBitWonder project hierarchy. Instructions are provided 
+  concerning what the specified directory hierarchy contains and what files 
+  should be included.
+
+Current Location: CardPOV/
+Description of hierarchy:
+    This is the root directory of the current project. This directory contains
+the file README.txt containing project-specific information and should be
+updated from default values to reflect your project.
+    In addition to the README.txt file, this directory contains a number of 
+folders corresponding to the various aspects of the project:
+    
+    Electronics   :: Electrical schematics and CAD files for the project
+    Mechanical    :: CAD, Mechanical designs, and related project source files
+    Firmware      :: Embedded software for the project (microcontroller code,
+                       FPGA/CPLD files, memory images, etc.)
+    Software      :: PC/Desktop software, drivers, software tools, etc. (used
+                       for interfacing to a project but not directly run on the
+                       hardware itself)
+    Simulation    :: Circuit simulations, 3D renderings, mathematical
+                       simulations of various aspects of the project
+    Documentation :: Documentation files for project
+
+    For any components of the project not in use, feel free to remove the file
+hierarchies.

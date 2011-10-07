@@ -1,0 +1,18 @@
+File: HELPME.txt
+Description: This file contains instructions for users and developers to help
+    navigate the standard NBitWonder project hierarchy. Instructions are
+    provided concerning what the specified directory hierarchy contains and
+    what files should be included.
+
+Current Location: <project_root>/Software
+Description of hierarchy:
+    The Software hierarchy contains any and all tools, utilities, drivers,
+graphical user interfaces, and other software used in your project. Software
+does not include any code embedded within the project hardware, which is given
+its own designation within the Firwmare hierarchy.
+    Each software component hierarchy should contain separate folders for each
+version of the component. NBitWonder project versioning begins at 1.0,
+incrementing by 1 for major versions and 0.1 for minor versions. If the project
+is a large project (many minor versions for each major version), consider
+grouping minor versions under shared major version hierarchies.
+

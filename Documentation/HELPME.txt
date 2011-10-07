@@ -1,0 +1,15 @@
+File: HELPME.txt
+Description: This file contains instructions for users and developers to help
+    navigate the standard NBitWonder project hierarchy. Instructions are
+    provided concerning what the specified directory hierarchy contains and
+    what files should be included.
+
+Current Location: CardPOV/Documentation
+Description of hierarchy:
+    This folder contains documentation files for the current OSHW project.
+Delete any file hierarchies not in use for your project.
+    Note: At the present time, it is recommended that project notebooks be
+basis of author. If a new author is added to the project, he/she should
+start a new project notebook ProjectNotebook_<authorname> file within the
+project notebook folder.
+

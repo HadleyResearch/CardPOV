@@ -1,0 +1,19 @@
+File: HELPME.txt
+Description: This file contains instructions for users and developers to help
+    navigate the standard NBitWonder project hierarchy. Instructions are
+    provided concerning what the specified directory hierarchy contains and
+    what files should be included.
+
+Current Location: CardPOV/Electrical
+Description of hierarchy:
+    This hierarchy contains relevant files for the electrical design of the
+project. Design files are separated into components -- portions of the design
+that are all co-located on a single printed circuit board. Should your design
+contain multiple components, such as daughterboards, independent motor drivers,
+power supplies, etc., each component should contain its own folder within
+<project_root>/Electronics. 
+    Each design component hierarchy should contain separate folders for each 
+version of the component. NBitWonder project versioning begins at 1.0, 
+incrementing by 1 for major versions and 0.1 for minor versions. If the project
+is a large project (many minor versions for each major version), consider 
+grouping minor versions under shared major version hierarchies.
